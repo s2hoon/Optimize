@@ -12,6 +12,7 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.NoSuchElementException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 
@@ -37,7 +38,6 @@ public class MemberRepository {
             } else {
                 pstmt.setDate(3, null);
             }
-
             LocalDateTime createdAt = member.getCreatedAt();
             if (createdAt != null) {
                 pstmt.setTimestamp(4, Timestamp.valueOf(createdAt));
@@ -58,6 +58,37 @@ public class MemberRepository {
             close(con, pstmt, null);
         }
 
+    }
+
+
+    public Member findById(Long id) throws SQLException {
+        String sql = "select * from member where id = ?";
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            con = getConnection();
+            pstmt = con.prepareStatement(sql);
+            pstmt.setLong(1, id);
+            rs = pstmt.executeQuery();
+            if (rs.next()) {
+                Member member = Member.builder()
+                        .id(rs.getLong("id"))
+                        .nickname(rs.getString("nickname"))
+                        .email(rs.getString("email"))
+                        .birthday(rs.getTimestamp("birthday").toLocalDateTime().toLocalDate())
+                        .build();
+
+                return member;
+            } else {
+                throw new NoSuchElementException("member not found memberId =" + id);
+            }
+        } catch (SQLException e) {//ResultSet executeQuery() throws SQLException;
+            log.error("db error",e);
+            throw e;
+        }finally{
+            close(con, pstmt, rs);
+        }
     }
 
     private void close(Connection con, PreparedStatement pstmt, ResultSet rs) {
