@@ -13,6 +13,10 @@ public class MemberReadService {
 
     private final MemberRepository memberRepository;
     public MemberDto getMember(Long id) throws SQLException {
-        return memberRepository.findById(id);
+        return toDto(memberRepository.findById(id));
+    }
+
+    private MemberDto toDto(Member member) {
+        return new MemberDto(member.getId(), member.getEmail(), member.getNickname(), member.getBirthday());
     }
 }

@@ -19,7 +19,10 @@ public class MemberWriteService {
                 .email(registerMemberCommand.email())
                 .birthday(registerMemberCommand.birthdate())
                 .build();
-        return memberRepository.save(member);
+        return toDto(memberRepository.save(member));
+    }
+    private MemberDto toDto(Member member) {
+        return new MemberDto(member.getId(), member.getEmail(), member.getNickname(), member.getBirthday());
     }
 
 }
