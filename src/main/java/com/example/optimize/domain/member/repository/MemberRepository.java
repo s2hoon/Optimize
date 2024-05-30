@@ -1,6 +1,7 @@
 package com.example.optimize.domain.member.repository;
 
 
+import com.example.optimize.domain.member.dto.MemberDto;
 import com.example.optimize.domain.member.entity.Member;
 import com.example.optimize.util.DBConnectionUtil;
 import java.sql.Connection;
@@ -22,7 +23,7 @@ import org.springframework.stereotype.Repository;
 public class MemberRepository {
     static final String TABLE = "member";
 
-    public Member save(Member member) throws SQLException{
+    public MemberDto save(Member member) throws SQLException{
         String sql = "insert into member(email,nickname,birthday, createdAt) values(?,?,?,?)";
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -50,7 +51,7 @@ public class MemberRepository {
                 Long generatedId = generatedKeys.getLong(1);
                 member.setId(generatedId);
             }
-            return member;
+            return toDto(member);
         } catch (SQLException e){
             log.error("db error", e);
             throw e;
@@ -61,7 +62,7 @@ public class MemberRepository {
     }
 
 
-    public Member findById(Long id) throws SQLException {
+    public MemberDto findById(Long id) throws SQLException {
         String sql = "select * from member where id = ?";
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -78,8 +79,7 @@ public class MemberRepository {
                         .email(rs.getString("email"))
                         .birthday(rs.getTimestamp("birthday").toLocalDateTime().toLocalDate())
                         .build();
-
-                return member;
+                return toDto(member);
             } else {
                 throw new NoSuchElementException("member not found memberId =" + id);
             }
@@ -124,5 +124,8 @@ public class MemberRepository {
         return DBConnectionUtil.getConnection();
     }
 
+    private MemberDto toDto(Member member) {
+        return new MemberDto(member.getId(), member.getEmail(), member.getNickname(), member.getBirthday());
+    }
 
 }

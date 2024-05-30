@@ -1,5 +1,6 @@
 package com.example.optimize.domain.member.service;
 
+import com.example.optimize.domain.member.dto.MemberDto;
 import com.example.optimize.domain.member.entity.Member;
 import com.example.optimize.domain.member.repository.MemberRepository;
 import java.sql.SQLException;
@@ -11,7 +12,7 @@ import org.springframework.stereotype.Service;
 public class MemberReadService {
 
     private final MemberRepository memberRepository;
-    public Member getMember(Long id) throws SQLException {
+    public MemberDto getMember(Long id) throws SQLException {
         return memberRepository.findById(id);
     }
 }

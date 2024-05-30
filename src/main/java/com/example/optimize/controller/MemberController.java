@@ -1,8 +1,8 @@
 package com.example.optimize.controller;
 
 
+import com.example.optimize.domain.member.dto.MemberDto;
 import com.example.optimize.domain.member.dto.RegisterMemberCommand;
-import com.example.optimize.domain.member.entity.Member;
 import com.example.optimize.domain.member.service.MemberReadService;
 import com.example.optimize.domain.member.service.MemberWriteService;
 import java.sql.SQLException;
@@ -20,12 +20,12 @@ public class MemberController {
     private final MemberReadService memberReadService;
 
     @PostMapping("/members")
-    public Member register(@RequestBody RegisterMemberCommand registerMemberCommand) throws SQLException {
+    public MemberDto register(@RequestBody RegisterMemberCommand registerMemberCommand) throws SQLException {
         return memberWriteService.create(registerMemberCommand);
     }
 
     @GetMapping("/members/{id}")
-    public Member getMember(@PathVariable Long id) throws SQLException {
+    public MemberDto getMember(@PathVariable Long id) throws SQLException {
         return memberReadService.getMember(id);
     }
 }
