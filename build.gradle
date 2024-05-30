@@ -34,6 +34,9 @@ dependencies {
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
 	// mysql jdbc
 	implementation 'mysql:mysql-connector-java:8.0.30'
+	/// Easyrandom
+	implementation 'org.jeasy:easy-random-core:5.0.0'
+
 }
 
 tasks.named('test') {
