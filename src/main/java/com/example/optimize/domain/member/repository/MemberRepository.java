@@ -14,7 +14,10 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 
@@ -124,5 +127,43 @@ public class MemberRepository {
         }
     }
 
+    public List<Member> findAllByIdIn(List<Long> ids) {
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        String sql = "SELECT * FROM member WHERE id IN (" + ids.stream()
+                .map(id -> "?")
+                .collect(Collectors.joining(", ")) + ")";
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            con = getConnection();
+            pstmt = con.prepareStatement(sql);
+            for (int i = 0; i < ids.size(); i++) {
+                pstmt.setLong(i + 1, ids.get(i));
+            }
+            rs = pstmt.executeQuery();
+            List<Member> results = new ArrayList<>();
+            while (rs.next()) {
+                Member member = Member.builder()
+                        .id(rs.getLong("id"))
+                        .nickname(rs.getString("nickname"))
+                        .email(rs.getString("email"))
+                        .birthday(rs.getTimestamp("birthday").toLocalDateTime().toLocalDate())
+                        .build();
+                results.add(member);
+            }
+            if (results.isEmpty()) {
+                throw new NoSuchElementException("No members found for the given IDs");
+            }
+            return results;
+        } catch (SQLException e) {
+            log.error("db error", e);
+            throw new RuntimeException("Database error occurred", e);
+        } finally {
+            close(con, pstmt, rs);
+        }
+    }
 
 }

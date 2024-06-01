@@ -1,4 +1,4 @@
-package com.example.optimize.controller;
+package com.example.optimize.application.controller;
 
 
 import com.example.optimize.domain.member.dto.MemberDto;

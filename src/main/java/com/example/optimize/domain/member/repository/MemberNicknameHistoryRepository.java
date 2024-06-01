@@ -84,7 +84,7 @@ public class MemberNicknameHistoryRepository{
 
             }
             if (results.isEmpty()) {
-                throw new NoSuchElementException("member not found memberId =" + id);
+                throw new NoSuchElementException("history not found memberId =" + id);
             }
             return results;
 

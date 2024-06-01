@@ -20,6 +20,13 @@ public class MemberReadService {
     public MemberDto getMember(Long id) throws SQLException {
         return toDto(memberRepository.findById(id));
     }
+    public List<MemberDto> getMembers(List<Long> memberIds) {
+        List<Member> members = memberRepository.findAllByIdIn(memberIds);
+        return members.stream()
+                .map(this::toDto)
+                .toList();
+    }
+
 
     public List<MemberNicknameHistoryDto> getNicknameHistories(Long memberId) throws SQLException {
         var histories = memberNicknameHistoryRepository.findAllByMemberId(memberId);
