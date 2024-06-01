@@ -1,8 +1,10 @@
 package com.example.optimize.domain.member.repository;
 
 
+import static com.example.optimize.util.DBConnectionUtil.close;
+import static com.example.optimize.util.DBConnectionUtil.getConnection;
+
 import com.example.optimize.domain.member.entity.Member;
-import com.example.optimize.util.DBConnectionUtil;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -20,9 +22,41 @@ import org.springframework.stereotype.Repository;
 @Repository
 @Slf4j
 public class MemberRepository {
-    static final String TABLE = "member";
+    public Member save(Member member) throws SQLException {
+        if (member.getId() == null) {
+            return insert(member);
+        }
+        return update(member);
+    }
 
-    public Member save(Member member) throws SQLException{
+    public Member update(Member member) throws SQLException {
+        String sql = "update member set email=?,nickname=?, birthday=? where id=?";
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = getConnection();
+            pstmt = con.prepareStatement(sql);
+            pstmt.setString(1, member.getEmail());
+            pstmt.setString(2, member.getNickname());
+            LocalDate birthday = member.getBirthday();
+            if (birthday != null) {
+                pstmt.setDate(3, Date.valueOf(birthday));
+            } else {
+                pstmt.setDate(3, null);
+            }
+            pstmt.setLong(4, member.getId());
+            int resultSize = pstmt.executeUpdate();
+            log.info("resultSize = {}", resultSize);
+            return member;
+        } catch (SQLException e) {
+            log.error("db error", e);
+            throw e;
+        } finally {
+            close(con, pstmt, null);
+        }
+    }
+
+    public Member insert(Member member) throws SQLException{
         String sql = "insert into member(email,nickname,birthday, createdAt) values(?,?,?,?)";
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -89,40 +123,6 @@ public class MemberRepository {
             close(con, pstmt, rs);
         }
     }
-
-    private void close(Connection con, PreparedStatement pstmt, ResultSet rs) {
-
-        if (rs != null) {
-            try {
-                rs.close();
-            } catch (SQLException e) {
-                log.info("error", e);
-
-            }
-        }
-
-        if (pstmt != null) {
-            try {
-                pstmt.close();
-            } catch (SQLException e) {
-                log.info("error", e);
-
-            }
-        }
-
-        if (con != null) {
-            try {
-                con.close();
-            } catch (SQLException e) {
-                log.info("error", e);
-
-            }
-        }
-    }
-    private static Connection getConnection() {
-        return DBConnectionUtil.getConnection();
-    }
-
 
 
 }
