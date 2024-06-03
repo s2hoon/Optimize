@@ -21,6 +21,11 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 @RequiredArgsConstructor
@@ -28,6 +33,16 @@ import org.springframework.stereotype.Repository;
 @Slf4j
 public class PostRepository {
 
+
+    private static final RowMapper<Post> ROW_MAPPER = (ResultSet resultSet, int rowNum) -> Post.builder()
+            .id(resultSet.getLong("id"))
+            .memberId(resultSet.getLong("memberId"))
+            .contents(resultSet.getString("contents"))
+            .createdDate(resultSet.getObject("createdDate", LocalDate.class))
+            .createdAt(resultSet.getObject("createdAt", LocalDateTime.class))
+            .likeCount(resultSet.getLong("likeCount"))
+            .version(resultSet.getLong("version"))
+            .build();
 
     public Post save(Post post) throws SQLException {
         return insert(post);
@@ -142,5 +157,56 @@ public class PostRepository {
             throw e;
         }
     }
+
+    public Page<Post> findAllByMemberId(Long memberId, PageRequest pageRequest) throws SQLException {
+        int offset = pageRequest.getPageNumber() * pageRequest.getPageSize();
+        int size = pageRequest.getPageSize();
+        String orderBy = "createdAt";
+        Sort sort = pageRequest.getSort();
+        List<Post> posts = new ArrayList<>();
+        String query = String.format("""
+            SELECT *
+            FROM post
+            WHERE memberId = ?
+            ORDER BY %s
+            LIMIT ?
+            OFFSET ?
+            """, orderBy);
+        try (Connection connection = DBConnectionUtil.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setLong(1, memberId);
+            statement.setInt(2, size);
+            statement.setInt(3, offset);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                int rowNum = 0;
+                while (resultSet.next()) {
+                    Post post = ROW_MAPPER.mapRow(resultSet, rowNum++);
+                    posts.add(post);
+                }
+            }
+        } catch (SQLException e) {
+            throw e;
+        }
+        return new PageImpl<>(posts, pageRequest, getCount(memberId));
+    }
+
+    private long getCount(Long memberId) throws SQLException {
+        String countQuery = String.format("SELECT COUNT(*) FROM post WHERE memberId = ?");
+        try (Connection connection = DBConnectionUtil.getConnection();
+             PreparedStatement statement = connection.prepareStatement(countQuery)) {
+            statement.setLong(1, memberId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getLong(1);
+                }
+            }
+        } catch (SQLException e) {
+            throw e;
+        }
+        return 0;
+    }
+
 
 }
