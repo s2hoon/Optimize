@@ -7,6 +7,7 @@ import static com.example.optimize.util.DBConnectionUtil.getConnection;
 import com.example.optimize.domain.post.dto.DailyPostCount;
 import com.example.optimize.domain.post.dto.DailyPostCountRequest;
 import com.example.optimize.domain.post.entity.Post;
+import com.example.optimize.util.DBConnectionUtil;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -105,4 +106,41 @@ public class PostRepository {
             close(con, pstmt, rs);
         }
     }
+
+    public void bulkInsert(List<Post> posts) throws SQLException {
+        String sql = """
+                INSERT INTO post (memberId, contents, createdDate, createdAt)
+                VALUES (?, ?, ?, ?)
+                """;
+
+        try (Connection con = DBConnectionUtil.getConnection();
+             PreparedStatement pstmt = con.prepareStatement(sql)) {
+            for (Post post : posts) {
+                pstmt.setLong(1, post.getMemberId());
+                pstmt.setString(2, post.getContents());
+
+                LocalDate createdDate = post.getCreatedDate();
+                if (createdDate != null) {
+                    pstmt.setDate(3, Date.valueOf(createdDate));
+                } else {
+                    pstmt.setDate(3, null);
+                }
+
+                LocalDateTime createdAt = post.getCreatedAt();
+                if (createdAt != null) {
+                    pstmt.setTimestamp(4, Timestamp.valueOf(createdAt));
+                } else {
+                    pstmt.setTimestamp(4, null);
+                }
+
+                pstmt.addBatch();
+            }
+
+            pstmt.executeBatch();
+        } catch (SQLException e) {
+            log.error("db error", e);
+            throw e;
+        }
+    }
+
 }
