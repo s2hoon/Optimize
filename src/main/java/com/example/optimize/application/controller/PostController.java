@@ -7,6 +7,8 @@ import com.example.optimize.domain.post.dto.PostCommand;
 import com.example.optimize.domain.post.entity.Post;
 import com.example.optimize.domain.post.service.PostReadService;
 import com.example.optimize.domain.post.service.PostWriteService;
+import com.example.optimize.util.CursorRequest;
+import com.example.optimize.util.PageCursor;
 import java.sql.SQLException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -42,5 +44,11 @@ public class PostController {
                                @RequestParam Integer page,
                                @RequestParam Integer size) throws SQLException {
         return postReadService.getPost(memberId, PageRequest.of(page, size));
+    }
+    @GetMapping("/members/{memberId}/by-cursor")
+    public PageCursor<Post> getPostsByCursor(@PathVariable Long memberId,
+                                     CursorRequest cursorRequest
+                              ) throws SQLException {
+        return postReadService.getPost(memberId, cursorRequest);
     }
 }

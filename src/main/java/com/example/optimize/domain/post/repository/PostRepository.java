@@ -40,8 +40,8 @@ public class PostRepository {
             .contents(resultSet.getString("contents"))
             .createdDate(resultSet.getObject("createdDate", LocalDate.class))
             .createdAt(resultSet.getObject("createdAt", LocalDateTime.class))
-            .likeCount(resultSet.getLong("likeCount"))
-            .version(resultSet.getLong("version"))
+//            .likeCount(resultSet.getLong("likeCount"))
+//            .version(resultSet.getLong("version"))
             .build();
 
     public Post save(Post post) throws SQLException {
@@ -156,6 +156,48 @@ public class PostRepository {
             log.error("db error", e);
             throw e;
         }
+    }
+
+    public List<Post> findAllByMemberIdAndOrderByIdDesc(Long memberId, int size) throws SQLException {
+        String sql = String.format("SELECT * FROM post WHERE memberId = ? ORDER BY id DESC LIMIT ?");
+        List<Post> posts = new ArrayList<>();
+        try (Connection conn = DBConnectionUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+             pstmt.setLong(1, memberId);
+             pstmt.setInt(2, size);
+            try (ResultSet resultSet = pstmt.executeQuery()) {
+                int rowNum = 0;
+                while (resultSet.next()) {
+                    Post post = ROW_MAPPER.mapRow(resultSet, rowNum++);
+                    posts.add(post);
+                }
+            }
+        } catch (SQLException e) {
+            throw e;
+        }
+        return posts;
+    }
+
+
+    public List<Post> findAllByLessThanIdMemberIdAndOrderByIdDesc(Long id , Long memberId, int size) throws SQLException {
+        String sql = String.format("SELECT * FROM post WHERE memberId = ? AND id < ? ORDER BY id DESC LIMIT ?");
+        List<Post> posts = new ArrayList<>();
+        try (Connection conn = DBConnectionUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setLong(1, memberId);
+            pstmt.setLong(2, id);
+            pstmt.setInt(3, size);
+            try (ResultSet resultSet = pstmt.executeQuery()) {
+                int rowNum = 0;
+                while (resultSet.next()) {
+                    Post post = ROW_MAPPER.mapRow(resultSet, rowNum++);
+                    posts.add(post);
+                }
+            }
+        } catch (SQLException e) {
+            throw e;
+        }
+        return posts;
     }
 
     public Page<Post> findAllByMemberId(Long memberId, PageRequest pageRequest) throws SQLException {
