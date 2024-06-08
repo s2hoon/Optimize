@@ -32,6 +32,12 @@ public class PostReadService {
         var nextKey = posts.stream().mapToLong(Post::getId).min().orElse(CursorRequest.NONE_KEY);
         return new PageCursor<>(cursorRequest.next(nextKey), posts);
     }
+    public PageCursor<Post> getPost(List<Long> memberIds, CursorRequest cursorRequest) throws SQLException{
+        var posts = findAllBy(memberIds, cursorRequest);
+        var nextKey = posts.stream().mapToLong(Post::getId).min().orElse(CursorRequest.NONE_KEY);
+        return new PageCursor<>(cursorRequest.next(nextKey), posts);
+    }
+
 
     private List<Post> findAllBy(Long memberId, CursorRequest cursorRequest) throws SQLException {
         if (cursorRequest.hasKey()) {
@@ -39,6 +45,14 @@ public class PostReadService {
                     cursorRequest.size());
         } else {
             return postRepository.findAllByMemberIdAndOrderByIdDesc(memberId, cursorRequest.size());
+        }
+    }
+    private List<Post> findAllBy(List<Long> memberIds, CursorRequest cursorRequest) throws SQLException {
+        if (cursorRequest.hasKey()) {
+            return postRepository.findAllByLessThanIdInMemberIdsAndOrderByIdDesc(cursorRequest.key(), memberIds,
+                    cursorRequest.size());
+        } else {
+            return postRepository.findAllByInMemberIdAndOrderByIdDesc(memberIds, cursorRequest.size());
         }
     }
 }

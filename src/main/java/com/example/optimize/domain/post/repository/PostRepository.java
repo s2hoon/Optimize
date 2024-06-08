@@ -177,6 +177,40 @@ public class PostRepository {
         }
         return posts;
     }
+    public List<Post> findAllByInMemberIdAndOrderByIdDesc(List<Long> memberIds, int size) throws SQLException {
+        if (memberIds.isEmpty()) {
+            return List.of(); // memberIds가 비어 있으면 빈 리스트 반환
+        }
+
+        // IN 절에 사용할 자리 표시자 생성
+        String placeholders = String.join(",", memberIds.stream().map(id -> "?").toArray(String[]::new));
+        String sql = String.format("SELECT * FROM post WHERE memberId IN (%s) ORDER BY id DESC LIMIT ?", placeholders);
+
+        List<Post> posts = new ArrayList<>();
+        try (Connection conn = DBConnectionUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            // memberId 값을 준비된 문(statement)에 설정
+            int index = 1;
+            for (Long memberId : memberIds) {
+                pstmt.setLong(index++, memberId);
+            }
+
+            // size 값을 설정
+            pstmt.setInt(index, size);
+
+            try (ResultSet resultSet = pstmt.executeQuery()) {
+                int rowNum = 0;
+                while (resultSet.next()) {
+                    Post post = ROW_MAPPER.mapRow(resultSet, rowNum++);
+                    posts.add(post);
+                }
+            }
+        } catch (SQLException e) {
+            throw e;
+        }
+        return posts;
+    }
 
 
     public List<Post> findAllByLessThanIdMemberIdAndOrderByIdDesc(Long id , Long memberId, int size) throws SQLException {
@@ -199,6 +233,42 @@ public class PostRepository {
         }
         return posts;
     }
+    public List<Post> findAllByLessThanIdInMemberIdsAndOrderByIdDesc(Long id , List<Long> memberIds, int size) throws SQLException {
+        if (memberIds == null || memberIds.isEmpty()) {
+            return new ArrayList<>(); // memberIds가 null이거나 비어 있으면 빈 리스트 반환
+        }
+
+        // IN 절에 사용할 자리 표시자 생성
+        String placeholders = String.join(",", memberIds.stream().map(i -> "?").toArray(String[]::new));
+        String sql = String.format("SELECT * FROM post WHERE memberId IN (%s) AND id < ? ORDER BY id DESC LIMIT ?", placeholders);
+
+        List<Post> posts = new ArrayList<>();
+        try (Connection conn = DBConnectionUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            // memberId 값을 준비된 문(statement)에 설정
+            int index = 1;
+            for (Long memberId : memberIds) {
+                pstmt.setLong(index++, memberId);
+            }
+
+            // id와 size 값을 설정
+            pstmt.setLong(index++, id);
+            pstmt.setInt(index, size);
+
+            try (ResultSet resultSet = pstmt.executeQuery()) {
+                int rowNum = 0;
+                while (resultSet.next()) {
+                    Post post = ROW_MAPPER.mapRow(resultSet, rowNum++);
+                    posts.add(post);
+                }
+            }
+        } catch (SQLException e) {
+            throw e;
+        }
+        return posts;
+    }
+
 
     public Page<Post> findAllByMemberId(Long memberId, PageRequest pageRequest) throws SQLException {
         int offset = pageRequest.getPageNumber() * pageRequest.getPageSize();

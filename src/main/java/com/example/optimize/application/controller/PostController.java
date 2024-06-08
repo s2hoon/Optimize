@@ -1,6 +1,7 @@
 package com.example.optimize.application.controller;
 
 
+import com.example.optimize.application.usecase.GetTimelinePostsUsecase;
 import com.example.optimize.domain.post.dto.DailyPostCount;
 import com.example.optimize.domain.post.dto.DailyPostCountRequest;
 import com.example.optimize.domain.post.dto.PostCommand;
@@ -28,6 +29,7 @@ public class PostController {
 
     private final PostWriteService postWriteService;
     private final PostReadService postReadService;
+    private final GetTimelinePostsUsecase getTimelinePostsUsecase;
 
     @PostMapping("")
     public Long create(PostCommand command) throws SQLException {
@@ -45,10 +47,16 @@ public class PostController {
                                @RequestParam Integer size) throws SQLException {
         return postReadService.getPost(memberId, PageRequest.of(page, size));
     }
+
     @GetMapping("/members/{memberId}/by-cursor")
     public PageCursor<Post> getPostsByCursor(@PathVariable Long memberId,
-                                     CursorRequest cursorRequest
-                              ) throws SQLException {
+                                             CursorRequest cursorRequest
+    ) throws SQLException {
         return postReadService.getPost(memberId, cursorRequest);
+    }
+
+    @GetMapping("/member/{memberId}/timeline")
+    public PageCursor<Post> getTimeline(@PathVariable Long memberId, CursorRequest cursorRequest) throws SQLException {
+        return getTimelinePostsUsecase.execute(memberId, cursorRequest);
     }
 }
