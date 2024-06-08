@@ -321,4 +321,39 @@ public class PostRepository {
     }
 
 
+    public List<Post> findAllByInId(List<Long> postIds) throws SQLException {
+        if (postIds.isEmpty()) {
+            return List.of(); // postIds가 비어 있으면 빈 리스트 반환
+        }
+
+        // IN 절에 사용할 자리 표시자 생성
+        String placeholders = String.join(",", postIds.stream().map(id -> "?").toArray(String[]::new));
+        String query = String.format("""
+        SELECT *
+        FROM post
+        WHERE id IN (%s)
+        """, placeholders);
+
+        List<Post> posts = new ArrayList<>();
+        try (Connection connection = DBConnectionUtil.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
+            // postId 값을 준비된 문(statement)에 설정
+            int index = 1;
+            for (Long postId : postIds) {
+                statement.setLong(index++, postId);
+            }
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                int rowNum = 0;
+                while (resultSet.next()) {
+                    Post post = ROW_MAPPER.mapRow(resultSet, rowNum++);
+                    posts.add(post);
+                }
+            }
+        } catch (SQLException e) {
+            throw e;
+        }
+        return posts;
+    }
 }

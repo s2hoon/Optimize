@@ -1,6 +1,7 @@
 package com.example.optimize.application.controller;
 
 
+import com.example.optimize.application.usecase.CreatePostUsecase;
 import com.example.optimize.application.usecase.GetTimelinePostsUsecase;
 import com.example.optimize.domain.post.dto.DailyPostCount;
 import com.example.optimize.domain.post.dto.DailyPostCountRequest;
@@ -18,6 +19,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -30,10 +32,12 @@ public class PostController {
     private final PostWriteService postWriteService;
     private final PostReadService postReadService;
     private final GetTimelinePostsUsecase getTimelinePostsUsecase;
+    private final CreatePostUsecase createPostUsecase;
 
     @PostMapping("")
-    public Long create(PostCommand command) throws SQLException {
-        return postWriteService.create(command);
+    public Long create(@RequestBody PostCommand command) throws SQLException {
+//        return postWriteService.create(command);
+        return createPostUsecase.execute(command);
     }
 
     @GetMapping("/daily-post-counts")
@@ -57,6 +61,6 @@ public class PostController {
 
     @GetMapping("/member/{memberId}/timeline")
     public PageCursor<Post> getTimeline(@PathVariable Long memberId, CursorRequest cursorRequest) throws SQLException {
-        return getTimelinePostsUsecase.execute(memberId, cursorRequest);
+        return getTimelinePostsUsecase.executeByTimeLine(memberId, cursorRequest);
     }
 }

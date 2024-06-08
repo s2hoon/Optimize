@@ -55,6 +55,10 @@ public class PostReadService {
             return postRepository.findAllByInMemberIdAndOrderByIdDesc(memberIds, cursorRequest.size());
         }
     }
+
+    public List<Post> getPost(List<Long> postIds) throws SQLException {
+        return postRepository.findAllByInId(postIds);
+    }
 }
 
 
