@@ -20,4 +20,10 @@ public class PostWriteService {
                 .build();
         return postRepository.save(post).getId();
     }
+
+    public void likePost(Long postId) throws SQLException {
+        var post = postRepository.findById(postId);
+        post.incrementLikeCount();
+        postRepository.save(post);
+    }
 }

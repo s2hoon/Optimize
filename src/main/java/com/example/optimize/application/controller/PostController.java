@@ -63,4 +63,9 @@ public class PostController {
     public PageCursor<Post> getTimeline(@PathVariable Long memberId, CursorRequest cursorRequest) throws SQLException {
         return getTimelinePostsUsecase.executeByTimeLine(memberId, cursorRequest);
     }
+
+    @PostMapping("/{postId}/like")
+    public void likePost(@PathVariable  Long postId) throws SQLException {
+        postWriteService.likePost(postId);
+    }
 }

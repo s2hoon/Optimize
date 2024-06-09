@@ -19,6 +19,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -40,12 +41,15 @@ public class PostRepository {
             .contents(resultSet.getString("contents"))
             .createdDate(resultSet.getObject("createdDate", LocalDate.class))
             .createdAt(resultSet.getObject("createdAt", LocalDateTime.class))
-//            .likeCount(resultSet.getLong("likeCount"))
+            .likeCount(resultSet.getLong("likeCount"))
 //            .version(resultSet.getLong("version"))
             .build();
 
     public Post save(Post post) throws SQLException {
-        return insert(post);
+        if (post == null) {
+            return insert(post);
+        }
+        return update(post);
     }
 
     private Post insert(Post post) throws SQLException {
@@ -323,27 +327,21 @@ public class PostRepository {
 
     public List<Post> findAllByInId(List<Long> postIds) throws SQLException {
         if (postIds.isEmpty()) {
-            return List.of(); // postIds가 비어 있으면 빈 리스트 반환
+            return List.of();
         }
-
-        // IN 절에 사용할 자리 표시자 생성
         String placeholders = String.join(",", postIds.stream().map(id -> "?").toArray(String[]::new));
         String query = String.format("""
         SELECT *
         FROM post
         WHERE id IN (%s)
         """, placeholders);
-
         List<Post> posts = new ArrayList<>();
         try (Connection connection = DBConnectionUtil.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
-
-            // postId 값을 준비된 문(statement)에 설정
             int index = 1;
             for (Long postId : postIds) {
                 statement.setLong(index++, postId);
             }
-
             try (ResultSet resultSet = statement.executeQuery()) {
                 int rowNum = 0;
                 while (resultSet.next()) {
@@ -355,5 +353,66 @@ public class PostRepository {
             throw e;
         }
         return posts;
+    }
+
+    public Post findById(Long id) throws SQLException {
+        String sql = "SELECT * FROM post WHERE id = ?";
+
+        try (Connection con = getConnection();
+             PreparedStatement pstmt = con.prepareStatement(sql)) {
+            pstmt.setLong(1, id);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return Post.builder()
+                            .id(rs.getLong("id"))
+                            .memberId(rs.getLong("memberId"))
+                            .contents(rs.getString("contents"))
+                            .createdDate(rs.getObject("createdDate", LocalDate.class))
+                            .createdAt(rs.getObject("createdAt", LocalDateTime.class))
+                            .likeCount(rs.getObject("likeCount", Long.class))
+//                            .version(rs.getObject("version", Long.class))
+                            .build();
+                } else {
+                    throw new NoSuchElementException("Post not found. Post ID: " + id);
+                }
+            }
+        } catch (SQLException e) {
+            log.error("Database error", e);
+            throw e;
+        }
+    }
+
+    public Post update(Post post) throws SQLException {
+        String sql = "update post set memberId=?,contents=?, createdDate=?, likeCount = ?, createdAt=? where id=?";
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = getConnection();
+            pstmt = con.prepareStatement(sql);
+            pstmt.setLong(1, post.getMemberId());
+            pstmt.setString(2, post.getContents());
+            LocalDate createdDate = post.getCreatedDate();
+            if (createdDate != null) {
+                pstmt.setDate(3, Date.valueOf(createdDate));
+            } else {
+                pstmt.setDate(3, null);
+            }
+            pstmt.setLong(4, post.getLikeCount());
+            LocalDateTime createdAt = post.getCreatedAt();
+            if (createdAt != null) {
+                pstmt.setTimestamp(5, Timestamp.valueOf(createdAt));
+            } else {
+                pstmt.setTimestamp(5, null);
+            }
+            pstmt.setLong(6, post.getId());
+            pstmt.executeUpdate();
+            return post;
+        } catch (SQLException e) {
+            log.error("db error", e);
+            throw e;
+        } finally {
+            close(con, pstmt, null);
+        }
     }
 }

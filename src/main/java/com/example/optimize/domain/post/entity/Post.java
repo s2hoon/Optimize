@@ -32,4 +32,10 @@ public class Post {
         this.likeCount = likeCount == null ? 0 : likeCount;
         this.version = version == null ? 0 : version;
     }
+    public void incrementLikeCount() {
+        if (likeCount == null) {
+            likeCount = 1L;
+        }
+        likeCount +=1;
+    }
 }
