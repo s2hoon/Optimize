@@ -68,4 +68,8 @@ public class PostController {
     public void likePost(@PathVariable  Long postId) throws SQLException {
         postWriteService.likePost(postId);
     }
+    @PostMapping("/{postId}/like/optimistic")
+    public void likePostOptimistic(@PathVariable  Long postId) throws SQLException {
+        postWriteService.likePostOptimisticLock(postId);
+    }
 }

@@ -22,7 +22,13 @@ public class PostWriteService {
     }
 
     public void likePost(Long postId) throws SQLException {
-        var post = postRepository.findById(postId);
+        var post = postRepository.findById(postId, true);
+        post.incrementLikeCount();
+        postRepository.save(post);
+    }
+
+    public void likePostOptimisticLock(Long postId) throws SQLException {
+        var post = postRepository.findById(postId, false);
         post.incrementLikeCount();
         postRepository.save(post);
     }

@@ -355,9 +355,11 @@ public class PostRepository {
         return posts;
     }
 
-    public Post findById(Long id) throws SQLException {
+    public Post findById(Long id, boolean requiredLock ) throws SQLException {
         String sql = "SELECT * FROM post WHERE id = ?";
-
+        if (requiredLock == true) {
+            sql += "for update";
+        }
         try (Connection con = getConnection();
              PreparedStatement pstmt = con.prepareStatement(sql)) {
             pstmt.setLong(1, id);
@@ -371,7 +373,7 @@ public class PostRepository {
                             .createdDate(rs.getObject("createdDate", LocalDate.class))
                             .createdAt(rs.getObject("createdAt", LocalDateTime.class))
                             .likeCount(rs.getObject("likeCount", Long.class))
-//                            .version(rs.getObject("version", Long.class))
+                            .version(rs.getObject("version", Long.class))
                             .build();
                 } else {
                     throw new NoSuchElementException("Post not found. Post ID: " + id);
@@ -384,7 +386,7 @@ public class PostRepository {
     }
 
     public Post update(Post post) throws SQLException {
-        String sql = "update post set memberId=?,contents=?, createdDate=?, likeCount = ?, createdAt=? where id=?";
+        String sql = "update post set memberId=?,contents=?, createdDate=?, likeCount = ?, createdAt=?, version = ? where id=? and version =?";
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -405,7 +407,9 @@ public class PostRepository {
             } else {
                 pstmt.setTimestamp(5, null);
             }
-            pstmt.setLong(6, post.getId());
+            pstmt.setLong(6, post.getVersion() + 1);
+            pstmt.setLong(7, post.getId());
+            pstmt.setLong(8, post.getVersion());
             pstmt.executeUpdate();
             return post;
         } catch (SQLException e) {
