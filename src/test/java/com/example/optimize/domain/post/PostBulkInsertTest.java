@@ -1,15 +1,17 @@
 package com.example.optimize.domain.post;
 
-import com.example.optimize.domain.post.entity.Post;
-import com.example.optimize.domain.post.repository.PostRepository;
-import com.example.optimize.util.PostFixtureFactory;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.stream.IntStream;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.util.StopWatch;
+
+import com.example.optimize.domain.post.entity.Post;
+import com.example.optimize.domain.post.repository.PostRepository;
+import com.example.optimize.util.PostFixtureFactory;
 
 @SpringBootTest
 public class PostBulkInsertTest {
@@ -29,7 +31,7 @@ public class PostBulkInsertTest {
         stopWatch.start();
 
         int _1만 = 10000;
-        var posts = IntStream.range(0, _1만 * 100)
+        var posts = IntStream.range(0,  _1만* 100)
                 .parallel()
                 .mapToObj(i -> easyRandom.nextObject(Post.class))
                 .toList();

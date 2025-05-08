@@ -1,10 +1,5 @@
 package com.example.optimize.domain.member.repository;
 
-
-import static com.example.optimize.util.DBConnectionUtil.close;
-import static com.example.optimize.util.DBConnectionUtil.getConnection;
-
-import com.example.optimize.domain.member.entity.MemberNicknameHistory;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -15,14 +10,20 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+
+import org.springframework.stereotype.Repository;
+
+import com.example.optimize.domain.member.entity.MemberNicknameHistory;
+import com.example.optimize.util.DBConnectionUtil;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Repository;
 
 @RequiredArgsConstructor
 @Repository
 @Slf4j
 public class MemberNicknameHistoryRepository{
+    private final DBConnectionUtil dbConnectionUtil;
     public MemberNicknameHistory save(MemberNicknameHistory history) throws SQLException {
         if (history.getId() == null) {
             return insert(history);
@@ -35,7 +36,7 @@ public class MemberNicknameHistoryRepository{
         PreparedStatement pstmt = null;
 
         try{
-            con = getConnection();
+            con = dbConnectionUtil.getConnection();
             pstmt = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             pstmt.setLong(1,history.getMemberId());
             pstmt.setString(2, history.getNickname());
@@ -56,7 +57,7 @@ public class MemberNicknameHistoryRepository{
             log.error("db error", e);
             throw e;
         }finally{
-            close(con, pstmt, null);
+            dbConnectionUtil.close(con, pstmt, null);
         }
 
     }
@@ -68,7 +69,7 @@ public class MemberNicknameHistoryRepository{
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            con = getConnection();
+            con = dbConnectionUtil.getConnection();
             pstmt = con.prepareStatement(sql);
             pstmt.setLong(1, id);
             rs = pstmt.executeQuery();
@@ -92,7 +93,7 @@ public class MemberNicknameHistoryRepository{
             log.error("db error", e);
             throw e;
         } finally {
-            close(con, pstmt, rs);
+            dbConnectionUtil.close(con, pstmt, rs);
         }
 
 

@@ -1,10 +1,5 @@
 package com.example.optimize.domain.follow.repository;
 
-
-import static com.example.optimize.util.DBConnectionUtil.close;
-import static com.example.optimize.util.DBConnectionUtil.getConnection;
-
-import com.example.optimize.domain.follow.entity.Follow;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -15,14 +10,22 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+
+import org.springframework.stereotype.Repository;
+
+import com.example.optimize.domain.follow.entity.Follow;
+import com.example.optimize.util.DBConnectionUtil;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Repository;
 
 @RequiredArgsConstructor
 @Repository
 @Slf4j
 public class FollowRepository {
+
+    private final DBConnectionUtil dbConnectionUtil;
+
     public Follow save(Follow follow) throws SQLException {
         if (follow.getId() == null)
             return insert(follow);
@@ -35,7 +38,7 @@ public class FollowRepository {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
-            con = getConnection();
+            con = dbConnectionUtil.getConnection();
             pstmt = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             pstmt.setLong(1, follow.getFromMemberId());
             pstmt.setLong(2, follow.getToMemberId());
@@ -56,7 +59,7 @@ public class FollowRepository {
             log.error("db error", e);
             throw e;
         } finally {
-            close(con, pstmt, null);
+            dbConnectionUtil.close(con, pstmt, null);
         }
 
     }
@@ -67,7 +70,7 @@ public class FollowRepository {
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            con = getConnection();
+            con = dbConnectionUtil.getConnection();
             pstmt = con.prepareStatement(sql);
             pstmt.setLong(1, toMemberId);
             rs = pstmt.executeQuery();
@@ -90,7 +93,7 @@ public class FollowRepository {
             log.error("db error", e);
             throw e;
         } finally {
-            close(con, pstmt, rs);
+            dbConnectionUtil.close(con, pstmt, rs);
         }
 
     }
@@ -100,7 +103,7 @@ public class FollowRepository {
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            con = getConnection();
+            con = dbConnectionUtil.getConnection();
             pstmt = con.prepareStatement(sql);
             pstmt.setLong(1, fromMemberId);
             rs = pstmt.executeQuery();
@@ -123,7 +126,7 @@ public class FollowRepository {
             log.error("db error", e);
             throw e;
         } finally {
-            close(con, pstmt, rs);
+            dbConnectionUtil.close(con, pstmt, rs);
         }
 
     }

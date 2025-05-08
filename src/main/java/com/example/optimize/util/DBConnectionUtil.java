@@ -1,58 +1,43 @@
 package com.example.optimize.util;
 
-import static com.example.optimize.util.ConnectionConst.PASSWORD;
-import static com.example.optimize.util.ConnectionConst.URL;
-import static com.example.optimize.util.ConnectionConst.USERNAME;
-
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+
+import javax.sql.DataSource;
+
+import org.springframework.stereotype.Component;
+
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Component
+@RequiredArgsConstructor
 public class DBConnectionUtil {
 
-    public static Connection getConnection() {
+    private final DataSource dataSource;
+
+    public Connection getConnection() {
         try {
-            Connection connection = DriverManager.getConnection(URL, USERNAME,
-                    PASSWORD);
-            log.info("get connection={}, class={}", connection,
-                    connection.getClass());
+            Connection connection = dataSource.getConnection();
+            log.info("get connection={}, class={}", connection, connection.getClass());
             return connection;
         } catch (SQLException e) {
-            throw new IllegalStateException(e);
+            throw new IllegalStateException("DB 커넥션 획득 실패", e);
         }
     }
 
-    public static void close(Connection con, PreparedStatement pstmt, ResultSet rs) {
-
+    public void close(Connection con, PreparedStatement pstmt, ResultSet rs) {
         if (rs != null) {
-            try {
-                rs.close();
-            } catch (SQLException e) {
-                log.info("error", e);
-
-            }
+            try { rs.close(); } catch (SQLException e) { log.warn("ResultSet close 실패", e); }
         }
-
         if (pstmt != null) {
-            try {
-                pstmt.close();
-            } catch (SQLException e) {
-                log.info("error", e);
-
-            }
+            try { pstmt.close(); } catch (SQLException e) { log.warn("PreparedStatement close 실패", e); }
         }
-
         if (con != null) {
-            try {
-                con.close();
-            } catch (SQLException e) {
-                log.info("error", e);
-
-            }
+            try { con.close(); } catch (SQLException e) { log.warn("Connection close 실패", e); }
         }
     }
 }

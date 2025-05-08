@@ -1,13 +1,5 @@
 package com.example.optimize.domain.post.repository;
 
-
-import static com.example.optimize.util.DBConnectionUtil.close;
-import static com.example.optimize.util.DBConnectionUtil.getConnection;
-
-import com.example.optimize.domain.post.dto.DailyPostCount;
-import com.example.optimize.domain.post.dto.DailyPostCountRequest;
-import com.example.optimize.domain.post.entity.Post;
-import com.example.optimize.util.DBConnectionUtil;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -20,8 +12,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -29,12 +20,20 @@ import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import com.example.optimize.domain.post.dto.DailyPostCount;
+import com.example.optimize.domain.post.dto.DailyPostCountRequest;
+import com.example.optimize.domain.post.entity.Post;
+import com.example.optimize.util.DBConnectionUtil;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 @RequiredArgsConstructor
 @Repository
 @Slf4j
 public class PostRepository {
 
-
+    private final DBConnectionUtil dbConnectionUtil;
     private static final RowMapper<Post> ROW_MAPPER = (ResultSet resultSet, int rowNum) -> Post.builder()
             .id(resultSet.getLong("id"))
             .memberId(resultSet.getLong("memberId"))
@@ -57,7 +56,7 @@ public class PostRepository {
         Connection con = null;
         PreparedStatement pstmt = null;
         try{
-            con = getConnection();
+            con = dbConnectionUtil.getConnection();
             pstmt = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             pstmt.setLong(1,post.getMemberId());
             pstmt.setString(2, post.getContents());
@@ -84,7 +83,7 @@ public class PostRepository {
             log.error("db error", e);
             throw e;
         }finally{
-            close(con, pstmt, null);
+            dbConnectionUtil.close(con, pstmt, null);
         }
 
     }
@@ -102,7 +101,7 @@ public class PostRepository {
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            con = getConnection();
+            con = dbConnectionUtil.getConnection();
             pstmt = con.prepareStatement(sql);
             pstmt.setLong(1, request.memberId());
             pstmt.setDate(2, Date.valueOf(request.firstDate()));
@@ -122,7 +121,7 @@ public class PostRepository {
             log.error("db error", e);
             throw e;
         } finally {
-            close(con, pstmt, rs);
+            dbConnectionUtil.close(con, pstmt, rs);
         }
     }
 
@@ -132,7 +131,7 @@ public class PostRepository {
                 VALUES (?, ?, ?, ?)
                 """;
 
-        try (Connection con = DBConnectionUtil.getConnection();
+        try (Connection con = dbConnectionUtil.getConnection();
              PreparedStatement pstmt = con.prepareStatement(sql)) {
             for (Post post : posts) {
                 pstmt.setLong(1, post.getMemberId());
@@ -165,7 +164,7 @@ public class PostRepository {
     public List<Post> findAllByMemberIdAndOrderByIdDesc(Long memberId, int size) throws SQLException {
         String sql = String.format("SELECT * FROM post WHERE memberId = ? ORDER BY id DESC LIMIT ?");
         List<Post> posts = new ArrayList<>();
-        try (Connection conn = DBConnectionUtil.getConnection();
+        try (Connection conn = dbConnectionUtil.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
              pstmt.setLong(1, memberId);
              pstmt.setInt(2, size);
@@ -191,7 +190,7 @@ public class PostRepository {
         String sql = String.format("SELECT * FROM post WHERE memberId IN (%s) ORDER BY id DESC LIMIT ?", placeholders);
 
         List<Post> posts = new ArrayList<>();
-        try (Connection conn = DBConnectionUtil.getConnection();
+        try (Connection conn = dbConnectionUtil.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             // memberId 값을 준비된 문(statement)에 설정
@@ -220,7 +219,7 @@ public class PostRepository {
     public List<Post> findAllByLessThanIdMemberIdAndOrderByIdDesc(Long id , Long memberId, int size) throws SQLException {
         String sql = String.format("SELECT * FROM post WHERE memberId = ? AND id < ? ORDER BY id DESC LIMIT ?");
         List<Post> posts = new ArrayList<>();
-        try (Connection conn = DBConnectionUtil.getConnection();
+        try (Connection conn = dbConnectionUtil.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setLong(1, memberId);
             pstmt.setLong(2, id);
@@ -247,7 +246,7 @@ public class PostRepository {
         String sql = String.format("SELECT * FROM post WHERE memberId IN (%s) AND id < ? ORDER BY id DESC LIMIT ?", placeholders);
 
         List<Post> posts = new ArrayList<>();
-        try (Connection conn = DBConnectionUtil.getConnection();
+        try (Connection conn = dbConnectionUtil.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             // memberId 값을 준비된 문(statement)에 설정
@@ -288,7 +287,7 @@ public class PostRepository {
             LIMIT ?
             OFFSET ?
             """, orderBy);
-        try (Connection connection = DBConnectionUtil.getConnection();
+        try (Connection connection = dbConnectionUtil.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setLong(1, memberId);
             statement.setInt(2, size);
@@ -309,7 +308,7 @@ public class PostRepository {
 
     private long getCount(Long memberId) throws SQLException {
         String countQuery = String.format("SELECT COUNT(*) FROM post WHERE memberId = ?");
-        try (Connection connection = DBConnectionUtil.getConnection();
+        try (Connection connection = dbConnectionUtil.getConnection();
              PreparedStatement statement = connection.prepareStatement(countQuery)) {
             statement.setLong(1, memberId);
 
@@ -336,7 +335,7 @@ public class PostRepository {
         WHERE id IN (%s)
         """, placeholders);
         List<Post> posts = new ArrayList<>();
-        try (Connection connection = DBConnectionUtil.getConnection();
+        try (Connection connection = dbConnectionUtil.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
             int index = 1;
             for (Long postId : postIds) {
@@ -360,7 +359,7 @@ public class PostRepository {
         if (requiredLock == true) {
             sql += "for update";
         }
-        try (Connection con = getConnection();
+        try (Connection con = dbConnectionUtil.getConnection();
              PreparedStatement pstmt = con.prepareStatement(sql)) {
             pstmt.setLong(1, id);
 
@@ -390,7 +389,7 @@ public class PostRepository {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
-            con = getConnection();
+            con = dbConnectionUtil.getConnection();
             pstmt = con.prepareStatement(sql);
             pstmt.setLong(1, post.getMemberId());
             pstmt.setString(2, post.getContents());
@@ -416,7 +415,7 @@ public class PostRepository {
             log.error("db error", e);
             throw e;
         } finally {
-            close(con, pstmt, null);
+            dbConnectionUtil.close(con, pstmt, null);
         }
     }
 }

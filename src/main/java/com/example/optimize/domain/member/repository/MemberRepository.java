@@ -1,10 +1,5 @@
 package com.example.optimize.domain.member.repository;
 
-
-import static com.example.optimize.util.DBConnectionUtil.close;
-import static com.example.optimize.util.DBConnectionUtil.getConnection;
-
-import com.example.optimize.domain.member.entity.Member;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -18,13 +13,22 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Repository;
+
+import com.example.optimize.domain.member.entity.Member;
+import com.example.optimize.util.DBConnectionUtil;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 
 @Repository
 @Slf4j
+@RequiredArgsConstructor
 public class MemberRepository {
+
+    private final DBConnectionUtil dbConnectionUtil;
     public Member save(Member member) throws SQLException {
         if (member.getId() == null) {
             return insert(member);
@@ -37,7 +41,7 @@ public class MemberRepository {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
-            con = getConnection();
+            con = dbConnectionUtil.getConnection();
             pstmt = con.prepareStatement(sql);
             pstmt.setString(1, member.getEmail());
             pstmt.setString(2, member.getNickname());
@@ -55,7 +59,7 @@ public class MemberRepository {
             log.error("db error", e);
             throw e;
         } finally {
-            close(con, pstmt, null);
+            dbConnectionUtil.close(con, pstmt, null);
         }
     }
 
@@ -65,7 +69,7 @@ public class MemberRepository {
         PreparedStatement pstmt = null;
 
         try{
-            con = getConnection();
+            con = dbConnectionUtil.getConnection();
             pstmt = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             pstmt.setString(1,member.getEmail());
             pstmt.setString(2, member.getNickname());
@@ -92,7 +96,7 @@ public class MemberRepository {
             log.error("db error", e);
             throw e;
         }finally{
-            close(con, pstmt, null);
+            dbConnectionUtil.close(con, pstmt, null);
         }
 
     }
@@ -104,7 +108,7 @@ public class MemberRepository {
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            con = getConnection();
+            con = dbConnectionUtil.getConnection();
             pstmt = con.prepareStatement(sql);
             pstmt.setLong(1, id);
             rs = pstmt.executeQuery();
@@ -123,7 +127,7 @@ public class MemberRepository {
             log.error("db error",e);
             throw e;
         }finally{
-            close(con, pstmt, rs);
+            dbConnectionUtil.close(con, pstmt, rs);
         }
     }
 
@@ -138,7 +142,7 @@ public class MemberRepository {
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            con = getConnection();
+            con = dbConnectionUtil.getConnection();
             pstmt = con.prepareStatement(sql);
             for (int i = 0; i < ids.size(); i++) {
                 pstmt.setLong(i + 1, ids.get(i));
@@ -162,7 +166,7 @@ public class MemberRepository {
             log.error("db error", e);
             throw new RuntimeException("Database error occurred", e);
         } finally {
-            close(con, pstmt, rs);
+            dbConnectionUtil.close(con, pstmt, rs);
         }
     }
 

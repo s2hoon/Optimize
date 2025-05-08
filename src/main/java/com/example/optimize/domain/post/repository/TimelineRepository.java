@@ -1,10 +1,5 @@
 package com.example.optimize.domain.post.repository;
 
-import static com.example.optimize.util.DBConnectionUtil.close;
-import static com.example.optimize.util.DBConnectionUtil.getConnection;
-
-import com.example.optimize.domain.post.entity.Timeline;
-import com.example.optimize.util.DBConnectionUtil;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,15 +9,22 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
+
+import com.example.optimize.domain.post.entity.Timeline;
+import com.example.optimize.util.DBConnectionUtil;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Repository
 @RequiredArgsConstructor
 @Slf4j
 public class TimelineRepository {
+
+    private final DBConnectionUtil dbConnectionUtil;
 
 
     private static final RowMapper<Timeline> ROW_MAPPER = (ResultSet resultSet, int rowNum) -> Timeline.builder()
@@ -43,7 +45,7 @@ public class TimelineRepository {
     public List<Timeline> findAllByMemberIdAndOrderByIdDesc(Long memberId, int size) throws SQLException {
         String sql = String.format("SELECT * FROM timeline WHERE memberId = ? ORDER BY id DESC LIMIT ?");
         List<Timeline> timelines = new ArrayList<>();
-        try (Connection conn = DBConnectionUtil.getConnection();
+        try (Connection conn = dbConnectionUtil.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setLong(1, memberId);
             pstmt.setInt(2, size);
@@ -62,7 +64,7 @@ public class TimelineRepository {
     public List<Timeline> findAllByLessThanIdMemberIdAndOrderByIdDesc(Long id , Long memberId, int size) throws SQLException {
         String sql = String.format("SELECT * FROM timeline WHERE memberId = ? AND id < ? ORDER BY id DESC LIMIT ?");
         List<Timeline> timelines = new ArrayList<>();
-        try (Connection conn = DBConnectionUtil.getConnection();
+        try (Connection conn = dbConnectionUtil.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setLong(1, memberId);
             pstmt.setLong(2, id);
@@ -84,7 +86,7 @@ public class TimelineRepository {
         Connection con = null;
         PreparedStatement pstmt = null;
         try{
-            con = getConnection();
+            con = dbConnectionUtil.getConnection();
             pstmt = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             pstmt.setLong(1,timeline.getMemberId());
             pstmt.setLong(2, timeline.getMemberId());
@@ -105,7 +107,7 @@ public class TimelineRepository {
             log.error("db error", e);
             throw e;
         }finally{
-            close(con, pstmt, null);
+            dbConnectionUtil.close(con, pstmt, null);
         }
 
     }
@@ -114,7 +116,7 @@ public class TimelineRepository {
                 INSERT INTO timeline (memberId, postId, createdAt)
                 VALUES (?, ?,  ?)
                 """;
-        try (Connection con = DBConnectionUtil.getConnection();
+        try (Connection con = dbConnectionUtil.getConnection();
              PreparedStatement pstmt = con.prepareStatement(sql)) {
             for (Timeline timeline : timelines) {
                 pstmt.setLong(1, timeline.getMemberId());
