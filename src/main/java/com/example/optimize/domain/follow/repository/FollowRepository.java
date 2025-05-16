@@ -84,9 +84,7 @@ public class FollowRepository {
                         .build();
                 results.add(follow);
             }
-            if (results.isEmpty()) {
-                throw new NoSuchElementException("follow not found toMemberId =" + toMemberId);
-            }
+
             return results;
 
         } catch (SQLException e) {//ResultSet executeQuery() throws SQLException;

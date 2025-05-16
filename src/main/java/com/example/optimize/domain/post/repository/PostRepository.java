@@ -45,7 +45,7 @@ public class PostRepository {
             .build();
 
     public Post save(Post post) throws SQLException {
-        if (post == null) {
+        if (post.getId() == null) {
             return insert(post);
         }
         return update(post);
@@ -357,7 +357,7 @@ public class PostRepository {
     public Post findById(Long id, boolean requiredLock ) throws SQLException {
         String sql = "SELECT * FROM post WHERE id = ?";
         if (requiredLock == true) {
-            sql += "for update";
+            sql += " for update";
         }
         try (Connection con = dbConnectionUtil.getConnection();
              PreparedStatement pstmt = con.prepareStatement(sql)) {
