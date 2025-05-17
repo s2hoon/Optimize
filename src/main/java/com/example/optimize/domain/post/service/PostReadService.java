@@ -1,5 +1,11 @@
 package com.example.optimize.domain.post.service;
 
+import java.sql.SQLException;
+import java.util.List;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
 
 import com.example.optimize.domain.post.dto.DailyPostCount;
 import com.example.optimize.domain.post.dto.DailyPostCountRequest;
@@ -7,12 +13,8 @@ import com.example.optimize.domain.post.entity.Post;
 import com.example.optimize.domain.post.repository.PostRepository;
 import com.example.optimize.util.CursorRequest;
 import com.example.optimize.util.PageCursor;
-import java.sql.SQLException;
-import java.util.List;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
 @Service
@@ -25,6 +27,9 @@ public class PostReadService {
 
     public Page<Post> getPost(Long memberId, PageRequest pageRequest) throws SQLException {
         return postRepository.findAllByMemberId(memberId, pageRequest);
+    }
+    public Post getPost(long postId) throws SQLException {
+        return postRepository.findById(postId,false);
     }
 
     public PageCursor<Post> getPost(Long memberId, CursorRequest cursorRequest) throws SQLException{

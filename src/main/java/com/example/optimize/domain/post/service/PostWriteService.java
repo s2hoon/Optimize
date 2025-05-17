@@ -25,7 +25,7 @@ public class PostWriteService {
     }
 
     @Transactional
-    public void likePost(Long postId) throws SQLException {
+    public void likePostPessimisticLock(Long postId) throws SQLException {
         var post = postRepository.findById(postId, true);
         post.incrementLikeCount();
         postRepository.save(post);
